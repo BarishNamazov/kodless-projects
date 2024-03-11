@@ -1,0 +1,20 @@
+{
+  "concepts": {
+    "websession.ts": {
+      "prompt": "This concept was implemented by a human.\nRevision: Instead of ObjectId, I will store user as string (by its username) in WebSession",
+      "spec": "WebSessionDoc = SessionData;\n\nWebSessionConcept = {\n  start: (session: WebSessionDoc, username: string) => void; // Throws NotAllowedError if session already has a user\n  end: (session: WebSessionDoc) => void; // Throws UnauthenticatedError if no user is logged in session\n  getUser: (session: WebSessionDoc) => string; // Throws UnauthenticatedError if no user is logged in session, returns username\n  isLoggedIn: (session: WebSessionDoc) => void; // Throws UnauthenticatedError if no user is logged in session\n  isLoggedOut: (session: WebSessionDoc) => void; // Throws NotAllowedError if a user is already logged in session\n}"
+    },
+    "post.ts": {
+      "prompt": "post concept stores author (string) and content (string). actions should be:\n- createPost that takes in author and content\n- getPosts that returns all posts\n- getPostsByAuthor that returns all posts by a given author (possibly empty)",
+      "spec": "PostDoc = {\n  author: string;\n  content: string;\n}\n\nPostConcept = {\n  constructor: (collectionName: string) => PostConcept; // instantiates a new PostConcept with the given collection name\n  async createPost: (author: string, content: string) => {msg: string, post: PostDoc}; // creates a new post and returns a message and the created post\n  async getPosts: () => PostDoc[]; // returns an array of all posts\n  async getPostsByAuthor: (author: string) => PostDoc[]; // returns an array of posts by a specific author\n}"
+    },
+    "upvote.ts": {
+      "prompt": "upvote stores author (string) and item (generic), representing author having an upvote for the item. actions should be upvote, removeUpvote.\nRevision: add action to return number of upvotes for a given item as a number\nRevision: add action to return array of usernames of people upvotes an item",
+      "spec": "UpvoteDoc = {\n  author: string;\n  item: ObjectId;\n}\n\nUpvoteConcept = {\n  constructor: (collectionName: string) => UpvoteConcept; // instantiates a new UpvoteConcept with the given collection name\n  async upvote: (author: string, itemId: ObjectId) => {msg: string}; // creates an upvote for an item by a user, returns message indicating success or that upvote already exists\n  async removeUpvote: (author: string, itemId: ObjectId) => {msg: string}; // removes an upvote for an item by a user, throws NotFoundError if the upvote does not exist\n  async countUpvotesForItem: (itemId: ObjectId) => number; // returns the count of upvotes for a specific item\n  async getUsersWhoUpvoted: (itemId: ObjectId) => string[]; // returns an array of usernames who upvoted a specific item\n}"
+    },
+    "comment.ts": {
+      "prompt": "each comment should have root (generic), parent (generic), author (string) and content (string). actions should be create(author, content, parent) and getByRoot(root). create should check if parent is a comment -- if it is, they should share the root and otherwise the root needs to be set to parent. getByRoot should return an array where each item is an object with comment and children properties.",
+      "spec": "CommentDoc = {\n  root: ObjectId;\n  parent: ObjectId;\n  author: string;\n  content: string;\n}\n\nCommentConcept = {\n  constructor: (collectionName: string) => CommentConcept; // instantiates a new CommentConcept with the given collection name\n  async create: (author: string, content: string, parent: ObjectId) => {msg: string, comment: CommentDoc}; // creates a new comment, if parent exists, sets parent's root as root, otherwise sets parent as root\n  async getByRoot: (root: ObjectId) => any[]; // returns a tree structure of comments starting from the root\n}"
+    }
+  }
+}
