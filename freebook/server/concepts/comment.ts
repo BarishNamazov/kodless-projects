@@ -9,6 +9,11 @@ interface CommentDoc extends BaseDoc {
   content: string;
 }
 
+interface CommentWithDepth {
+  comment: CommentDoc;
+  depth: number;
+}
+
 export default class CommentConcept {
   public readonly comments: DocCollection<CommentDoc>;
 
@@ -45,5 +50,26 @@ export default class CommentConcept {
     };
 
     return buildTree(null);
+  }
+
+  async getByRootFlat(root: ObjectId): Promise<CommentWithDepth[]> {
+    const comments = await this.comments.readMany({ root });
+
+    // Helper function to recursively flatten the hierarchy
+    const flatten = (parentId: ObjectId | null, depth: number = 0): CommentWithDepth[] => {
+      return comments
+        .filter((c) => (parentId ? c.parent.equals(parentId) : c.parent.equals(root)))
+        // Use the binary representation of the ObjectId for sorting instead of compareTo
+        .sort((a, b) => a._id.toString().localeCompare(b._id.toString())) // Sorting by _id to maintain a consistent order
+        .reduce<CommentWithDepth[]>((acc, current) => {
+          // Adding the current comment with its depth
+          acc.push({ comment: current, depth });
+          // Recursively adding children comments
+          acc.push(...flatten(current._id, depth + 1));
+          return acc;
+        }, []);
+    };
+
+    return flatten(null);
   }
 }
