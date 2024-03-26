@@ -473,6 +473,36 @@ class Routes {
     await Karma.isAllowed(new ObjectId(userId), 2);
     return await User.changeTopBar(userId, topBarColor);
   }
+
+  // Get comments under parent with their details
+  @Router.get("/comments")
+  async getComments(session: WebSessionDoc, parent: string) {
+    const parentId = new ObjectId(parent);
+    const comments = await Comment.getByParent(parentId);
+    const authorIds = [...new Set(comments.map((comment) => comment.author))];
+    const authors = await User.getByIds(authorIds);
+
+    const userId = WebSession.getUser(session);
+    let votes = {};
+    if (userId) {
+      votes = await CommentVotes.getVotes(
+        userId,
+        comments.map((comment) => comment._id),
+      );
+    }
+
+    const commentsPoints = await CommentVotes.getItemsPts(comments.map((comment) => comment._id));
+
+    return comments.map((comment) => {
+      const commentId = comment._id.toString();
+      return {
+        ...comment,
+        author: authors[comment.author.toString()],
+        vote: votes[commentId],
+        points: commentsPoints[commentId],
+      };
+    });
+  }
 }
 
 export default getExpressRouter(new Routes());
